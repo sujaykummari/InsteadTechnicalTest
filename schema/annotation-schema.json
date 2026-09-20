@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/tax-annotation.schema.json",
+  "title": "Tax Form Annotation Schema",
+  "type": "object",
+  "required": ["form", "annotations"],
+  "properties": {
+    "form": {
+      "type": "object",
+      "required": ["id", "version", "page", "coordinateSystem", "width", "height"],
+      "properties": {
+        "id": { "type": "string" },
+        "country": { "type": "string", "description": "ISO-like country routing key, for example US or IN." },
+        "version": { "type": "string" },
+        "name": { "type": "string" },
+        "page": { "type": "integer", "minimum": 1 },
+        "coordinateSystem": {
+          "type": "string",
+          "enum": ["pdf-points", "relative"],
+          "description": "Coordinates are expressed in PDF points with origin at the top-left of the page. Relative mode is normalized to 0-1 coordinates."
+        },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "annotations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/annotation" }
+    }
+  },
+  "$defs": {
+    "annotation": {
+      "type": "object",
+      "required": ["id", "type", "data", "position"],
+      "properties": {
+        "id": { "type": "string" },
+        "page": { "type": "integer", "minimum": 1, "description": "Optional page override. Defaults to form.page." },
+        "type": {
+          "type": "string",
+          "enum": ["text", "number", "currency", "date", "checkbox", "radio", "multiline", "percent"]
+        },
+        "data": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": { "type": "string" },
+            "fallback": { "type": ["string", "number", "boolean", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "value": {
+          "type": "object",
+          "properties": {
+            "equals": { "type": ["string", "number", "boolean", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "position": {
+          "$ref": "#/$defs/position"
+        },
+        "format": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "decimalPlaces": { "type": "integer", "minimum": 0 },
+            "alignment": { "type": "string", "enum": ["left", "center", "right"] },
+            "fontFamily": { "type": "string" },
+            "fontSize": { "type": "number", "minimum": 1 },
+            "verticalOffset": { "type": "number", "description": "Text offset in PDF points from the top of the annotation rectangle." },
+            "currencySymbol": { "type": "string" },
+            "thousandsSeparator": { "type": "boolean" },
+            "negativeFormat": { "type": "string" },
+            "zeroFormat": { "type": ["string", "null"] },
+            "output": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "required": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        "appearance": {
+          "type": "object",
+          "properties": {
+            "mark": { "type": "string" },
+            "checked": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "position": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 },
+        "unit": {
+          "type": "string",
+          "enum": ["pdf-points", "relative"],
+          "default": "pdf-points"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

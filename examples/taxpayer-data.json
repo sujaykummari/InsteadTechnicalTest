@@ -1,0 +1,103 @@
+{
+  "country": "IN",
+  "taxYear": 2025,
+  "taxpayer": {
+    "filingStatus": "single",
+    "name": {
+      "first": "John",
+      "last": "Doe"
+    },
+    "ssn": "123-45-6789",
+    "address": {
+      "street": "123 Main St",
+      "city": "Seattle",
+      "state": "WA",
+      "zip": "98101"
+    },
+    "phone": "206-555-0142",
+    "email": "john.doe@example.com"
+  },
+  "income": {
+    "w2": [
+      {
+        "employer": "Example Corp",
+        "wages": 125000,
+        "federalIncomeTaxWithheld": 18500,
+        "socialSecurityWages": 125000,
+        "medicareWages": 125000
+      }
+    ],
+    "interest": 150.25,
+    "dividends": 500.00,
+    "capitalGains": 3200.75,
+    "iraDistributions": 0,
+    "pensionsAndAnnuities": 0,
+    "socialSecurityBenefits": 0,
+    "otherIncome": 850
+  },
+  "deductions": {
+    "standardDeduction": 14600,
+    "mortgageInterest": 12000,
+    "charitableContributions": 2500,
+    "studentLoanInterest": 1200,
+    "retirementContribution": 6500
+  },
+  "taxCredits": {
+    "childTaxCredit": 2000,
+    "educationCredit": 0,
+    "foreignTaxCredit": 125,
+    "retirementSavingsCredit": 0
+  },
+  "return": {
+    "adjustedGrossIncome": 125000,
+    "taxableIncome": 110400,
+    "totalTax": 18500,
+    "federalWithholding": 18500,
+    "estimatedTaxPayments": 0,
+    "refund": 2000,
+    "amountOwed": 0
+  },
+  "dependents": [],
+  "bank": {
+    "directDeposit": true,
+    "routingNumber": "021000021",
+    "accountNumber": "987654321"
+  },
+  "india": {
+    "financialYear": "2025-26",
+    "employee": {
+      "name": "Arjun Mehta",
+      "pan": "ABCDE1234F",
+      "address": "24 MG Road, Bengaluru, Karnataka 560001"
+    },
+    "employer": {
+      "name": "Example Technologies India Pvt Ltd",
+      "tan": "BLRE12345B",
+      "pan": "AABCE1234K",
+      "address": "100 Residency Road, Bengaluru, Karnataka 560025"
+    },
+    "salary": {
+      "grossSalary": 2400000,
+      "basicSalary": 1200000,
+      "houseRentAllowance": 480000,
+      "specialAllowance": 420000,
+      "perquisites": 60000,
+      "professionalTax": 2400,
+      "standardDeduction": 75000,
+      "section80C": 150000,
+      "section80D": 25000,
+      "taxableSalary": 2147600
+    },
+    "tds": {
+      "quarterly": [
+        { "quarter": "Q1", "taxDeducted": 42000 },
+        { "quarter": "Q2", "taxDeducted": 42000 },
+        { "quarter": "Q3", "taxDeducted": 42000 },
+        { "quarter": "Q4", "taxDeducted": 42000 }
+      ],
+      "totalDeducted": 168000,
+      "challanNumber": "123456789012",
+      "certificateNumber": "FORM16-2025-000123"
+    }
+  }
+}

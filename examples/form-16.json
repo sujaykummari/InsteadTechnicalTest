@@ -1,0 +1,87 @@
+{
+  "form": {
+    "id": "india-form-16",
+    "version": "2025-2026",
+    "name": "Form 16 - Salary TDS Certificate",
+    "page": 1,
+    "coordinateSystem": "pdf-points",
+    "width": 595,
+    "height": 842,
+    "country": "IN",
+    "documentType": "tds-certificate"
+  },
+  "annotations": [
+    {
+      "id": "employee-name",
+      "page": 1,
+      "type": "text",
+      "data": { "path": "india.employee.name" },
+      "position": { "x": 110, "y": 145, "width": 220, "height": 18 },
+      "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
+    },
+    {
+      "id": "employee-pan",
+      "page": 1,
+      "type": "text",
+      "data": { "path": "india.employee.pan" },
+      "position": { "x": 390, "y": 145, "width": 105, "height": 18 },
+      "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
+    },
+    {
+      "id": "employer-name",
+      "page": 1,
+      "type": "text",
+      "data": { "path": "india.employer.name" },
+      "position": { "x": 110, "y": 178, "width": 300, "height": 18 },
+      "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
+    },
+    {
+      "id": "employer-tan",
+      "page": 1,
+      "type": "text",
+      "data": { "path": "india.employer.tan" },
+      "position": { "x": 420, "y": 178, "width": 75, "height": 18 },
+      "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
+    },
+    {
+      "id": "financial-year",
+      "page": 1,
+      "type": "text",
+      "data": { "path": "india.financialYear" },
+      "position": { "x": 420, "y": 211, "width": 75, "height": 18 },
+      "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
+    },
+    {
+      "id": "gross-salary",
+      "page": 2,
+      "type": "currency",
+      "data": { "path": "india.salary.grossSalary" },
+      "position": { "x": 420, "y": 220, "width": 115, "height": 18 },
+      "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
+    },
+    {
+      "id": "standard-deduction",
+      "page": 2,
+      "type": "currency",
+      "data": { "path": "india.salary.standardDeduction" },
+      "position": { "x": 420, "y": 310, "width": 115, "height": 18 },
+      "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
+    },
+    {
+      "id": "taxable-salary",
+      "page": 2,
+      "type": "currency",
+      "data": { "path": "india.salary.taxableSalary" },
+      "position": { "x": 420, "y": 390, "width": 115, "height": 18 },
+      "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
+    },
+    {
+      "id": "tax-deducted",
+      "page": 2,
+      "type": "currency",
+      "data": { "path": "india.tds.totalDeducted" },
+      "position": { "x": 420, "y": 485, "width": 115, "height": 18 },
+      "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
+    }
+  ]
+}

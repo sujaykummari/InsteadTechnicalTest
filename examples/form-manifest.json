@@ -1,0 +1,18 @@
+{
+  "countries": {
+    "US": {
+      "name": "United States",
+      "form": "us-1040",
+      "template": "templates/us-tax-form.pdf",
+      "annotations": "examples/form-1040.json",
+      "output": "output/filled-form-1040.pdf"
+    },
+    "IN": {
+      "name": "India",
+      "form": "india-form-16",
+      "template": "templates/india-tax-form-blank.pdf",
+      "annotations": "examples/form-16.json",
+      "output": "output/filled-form-16.pdf"
+    }
+  }
+}
