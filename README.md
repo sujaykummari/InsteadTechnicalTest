@@ -1,6 +1,31 @@
 # Instead Tax Annotation
 
-This project is a compact engineering assessment for a tax-form annotation system. It separates the taxpayer data from the physical layout and formatting rules for a PDF form, so the same annotation definition can be reused across different tax returns and form versions.
+This project is a tax-form annotation system built to map real taxpayer data onto official PDF tax forms without embedding values directly into the form layout.
+
+## What this project is
+
+The goal is to separate three concerns:
+
+- taxpayer data: the actual values such as name, wages, deductions, and tax information
+- form annotation metadata: where each value belongs on the PDF and how it should be placed
+- rendering logic: the code that reads the data, resolves the correct field, formats it, and draws it onto the tax form
+
+This lets the same annotation layout be reused for different tax returns or countries, while keeping the actual taxpayer details in a separate JSON file.
+
+## What was added in the previous work
+
+The project evolved from a simple layout prototype into a working PDF overlay system with these improvements:
+
+- actual PDF rendering onto real tax-form backgrounds instead of just console output
+- debug mode that draws red annotation rectangles over the original form for calibration
+- country-based form routing for US and India examples
+- separate taxpayer data JSON from annotation definition JSON
+- nested value resolution such as income.w2[0].wages and india.salary.grossSalary
+- formatting support for currency, numbers, dates, and checkbox values
+- graceful handling for missing values and fallback values
+- coordinate-based placement with PDF-point geometry and scaling
+- tests covering runtime resolution and PDF generation
+- project documentation and specification files for clarity
 
 ## Goals
 
@@ -13,22 +38,22 @@ This project is a compact engineering assessment for a tax-form annotation syste
 
 ## Specification
 
-The project specification is documented in [docs/specification.md](docs/specification.md). It defines the annotation contract, supported field types, coordinate model, rendering behavior, and the explicit list of features that are implemented versus planned for future work.
+The detailed project specification is documented in [docs/specification.md](docs/specification.md). It defines the annotation contract, supported field types, coordinate model, rendering behavior, and the features that are implemented versus planned for future work.
 
 ## Folder structure
 
-- `schema/annotation-schema.json` — JSON schema for annotation documents
-- `examples/form-manifest.json` — country-to-template and annotation routing
-- `examples/form-1040.json` — multi-page US Form 1040 annotation definition
-- `examples/form-16.json` — India Form 16 Part A/B-style annotation definition
-- `examples/taxpayer-data.json` — example tax return data
-- `renderer/` — C# PDF renderer and formatting engine
-- `templates/us-tax-form.pdf` — original US tax form PDF used as the background
-- `templates/india-tax-form-blank.pdf` — blank Indian Form 16 format used as the background
-- `output/filled-form-1040.pdf` — generated annotated PDF after running the demo
-- `tests/` — unit and PDF integration tests
-- `docs/` — technical specification and design decisions
-- `walkthrough/README.md` — 5-minute presentation script
+- schema/annotation-schema.json — JSON schema for annotation documents
+- examples/form-manifest.json — country-to-template and annotation routing
+- examples/form-1040.json — US Form 1040 annotation definition
+- examples/form-16.json — India Form 16 annotation definition
+- examples/taxpayer-data.json — example tax return data
+- renderer/ — C# PDF renderer and formatting engine
+- templates/us-tax-form.pdf — original US tax form PDF used as the background
+- templates/india-tax-form-blank.pdf — blank Indian Form 16 background
+- output/ — generated filled PDFs
+- tests/ — unit and PDF integration tests
+- docs/ — specification and design notes
+- walkthrough/README.md — presentation notes
 
 ## Core idea
 
@@ -36,67 +61,48 @@ An annotation does not hold the final tax value. Instead, it points at the value
 
 Example:
 
-- Annotation path: `taxpayer.name.first`
-- Runtime value: `John`
+- Annotation path: taxpayer.name.first
+- Runtime value: John
 
-- Annotation path: `income.w2[0].wages`
-- Runtime value: `125000`
+- Annotation path: income.w2[0].wages
+- Runtime value: 125000
 
-This keeps the layout definition independent from the actual tax information while still letting the same template be reused.
+The layout definition stays separate from the tax information, which makes the project reusable and easier to maintain.
 
 ## Quick start
 
-From the project folder, run:
+From the project root, run:
 
 ```powershell
+cd "c:\Users\SujayKummari\Desktop\Java\instead-tax-annotation\instead-tax-annotation"
 dotnet run --project renderer
 ```
 
-The renderer reads `country` from `examples/taxpayer-data.json`, looks up that country in `examples/form-manifest.json`, opens the configured PDF background, and overlays the matching annotation definition. The default `US` result is written to `output/filled-form-1040.pdf`.
+The renderer reads the country from examples/taxpayer-data.json, looks up the route in examples/form-manifest.json, opens the configured PDF template, and overlays the matching annotation definition.
 
-To generate the India document, change only this value:
+The default US result is written to output/filled-form-1040.pdf.
+
+To generate the India version, change this value in taxpayer-data.json:
 
 ```json
 "country": "IN"
 ```
 
-Then run the same command. The renderer selects `examples/form-16.json` and `templates/india-tax-form-blank.pdf`, writing `output/filled-form-16.pdf` by default. Restore `"country": "US"` to return to the Form 1040 example.
+Then run the same command again. The app will switch to the India template and annotation file and generate output/filled-form-16.pdf.
 
-To choose another output path:
-
-```powershell
-dotnet run --project renderer -- C:\temp\filled-1040.pdf
-```
-
-To generate a coordinate-debug copy with red dashed rectangles and annotation IDs:
+To generate a debug copy with red rectangles and annotation IDs:
 
 ```powershell
 dotnet run --project renderer -- --debug
 ```
 
-This writes `output/filled-form-1040-debug.pdf` by default. A custom output path can be combined with debug mode: `dotnet run --project renderer -- C:\temp\debug.pdf --debug`.
+This is useful for checking field placement against the original PDF.
 
-The debug output is especially useful for calibrating the original IRS background. The current US anchors target the filing-status checkbox, taxpayer name/SSN row, and Form W-2 wages line 1a; they are no longer based on the earlier generated demonstration page.
-
-Run the automated checks with:
+To run the automated checks:
 
 ```powershell
 dotnet test tests
 ```
-
-The US background is the original IRS Form 1040 PDF downloaded from `irs.gov`. The India background is a public blank Form 16 format with empty value areas, selected so example taxpayer values do not overlap prefilled sample data. Form 16 is not an Indian Form 1040 equivalent: the Income Tax Department describes it as an employer-issued salary TDS certificate with Part A and Part B. A production Form 16 should be generated and supplied by the employer/TRACES workflow. Replace either template PDF with another form and keep the annotation coordinates aligned to that form's page geometry.
-
-Generated PDFs are intentionally excluded from source control. The renderer creates them under `output/` when you run the demo.
-
-## Adding a template
-
-1. Put the background PDF in `templates/`.
-2. Create an annotation JSON document with `form` metadata and `annotations`; each annotation only stores a data path such as `taxpayer.name.first` or `income.w2[0].wages`.
-3. Add a route in `examples/form-manifest.json` with the template and annotation paths.
-4. Keep runtime values in `examples/taxpayer-data.json` or another input file; do not copy values into the annotation document.
-5. Run with `--debug` and adjust the rectangles until they sit over the intended boxes.
-
-For small vertical alignment corrections, add `"verticalOffset": 3` inside a field's `format` object. The value is measured in PDF points from the top of the annotation rectangle. The renderer defaults to `3` points, so this is the exact setting to change when a value needs to move slightly up or down without moving the debug box.
 
 ## Example annotation shape
 
@@ -124,15 +130,13 @@ For small vertical alignment corrections, add `"verticalOffset": 3` inside a fie
 
 ## Design assumptions
 
-- Coordinates use PDF points with the origin at the top-left of the page. `x`, `y`, `width`, and `height` are defined in the form metadata coordinate space and are scaled to the actual target PDF page width and height at render time.
-- `x` and `y` represent the bounding box origin; `width` and `height` define the area available for drawing the value.
-- A position may use `unit: "relative"` for normalized 0-1 coordinates; relative values are scaled by the form width and height.
-- Missing values render blank unless `data.fallback` is present.
-- Currency supports decimal places, thousands separators, and a configurable symbol.
-- Checkbox and radio annotations render their configured mark only when the annotation's equality rule matches.
-- Text is centered vertically inside its bounding box, with left, center, and right alignment supported.
-- An annotation may override the form-level page with `page`, allowing one annotation file to cover multiple PDF pages.
-- Debug mode draws each resolved rectangle in red and labels it with the annotation ID, making coordinate calibration visible without modifying taxpayer data.
+- Coordinates use PDF points with the origin at the top-left of the page.
+- x, y, width, and height describe the target box where the value should be drawn.
+- The form metadata coordinate space is scaled to the actual PDF page size at render time.
+- Missing values render blank unless a fallback is provided.
+- Currency, number, and date formatting are kept separate from the source taxpayer data.
+- Checkbox and radio annotations render only when the configured value matches.
+- Debug mode highlights annotation rectangles so calibration can be adjusted visually.
 
 ## Rendering flow
 
@@ -145,25 +149,33 @@ annotation JSON + taxpayer JSON
     |
   PDF template overlay
     |
-  filled-form-1040.pdf
+  final filled PDF
 ```
 
-The renderer never copies taxpayer values into the annotation definition. For example, `income.w2[0].wages` is resolved at render time and formatted as `$125,000` in the US PDF, while `india.salary.grossSalary` becomes `INR 2,400,000` in the India document.
+The renderer never copies taxpayer values into the annotation definition. Instead, it resolves the path at runtime and draws the final value into the appropriate position.
 
-The sources used for the background documents are:
+## Supported use cases
 
-- US Form 1040: `https://www.irs.gov/pub/irs-pdf/f1040.pdf`
-- Form 16 reference: `https://www.incometaxindia.gov.in/w/form-16-and-form-16a`
-- Blank Form 16 format: `http://www.forms.in/wp-content/uploads/forms/Form-No.16.pdf`
+The project was built to support:
+
+- US tax form overlay generation with an official IRS form background
+- India-form-style sample generation with a different route and annotation layout
+- nested data extraction from complex JSON objects
+- value formatting for print-friendly output
+- calibration of form coordinates using debug overlay mode
 
 ## Future extension
 
-The design can grow to support:
+The design can be extended to include:
 
 - repeating sections
 - conditional visibility
-- validation
-- checkboxes and radio buttons
-- localization
-- OCR/calibration for scanned forms
-- schema versioning
+- richer validation
+- multiline fields
+- more country and tax-form templates
+- OCR or scanned-form calibration support
+- schema versioning and broader automation
+
+## Summary
+
+This project is a working prototype for tax-form PDF annotation. It demonstrates how to keep taxpayer records separate from form layout, resolve nested data paths, apply formatting, and render values onto real PDF forms. The main improvements added during development were actual PDF rendering, country routing, calibration overlays, and country-specific layout support for US and India examples.
