@@ -16,7 +16,7 @@
       "page": 1,
       "type": "text",
       "data": { "path": "india.employee.name" },
-      "position": { "x": 110, "y": 145, "width": 220, "height": 18 },
+      "position": { "x": 390, "y": 140, "width": 220, "height": 18 },
       "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
     },
     {
@@ -24,7 +24,7 @@
       "page": 1,
       "type": "text",
       "data": { "path": "india.employee.pan" },
-      "position": { "x": 390, "y": 145, "width": 105, "height": 18 },
+      "position": { "x": 390, "y": 165, "width": 105, "height": 18 },
       "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
     },
     {
@@ -32,7 +32,7 @@
       "page": 1,
       "type": "text",
       "data": { "path": "india.employer.name" },
-      "position": { "x": 110, "y": 178, "width": 300, "height": 18 },
+      "position": { "x": 100, "y": 140, "width": 300, "height": 18 },
       "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
     },
     {
@@ -40,7 +40,7 @@
       "page": 1,
       "type": "text",
       "data": { "path": "india.employer.tan" },
-      "position": { "x": 420, "y": 178, "width": 75, "height": 18 },
+      "position": { "x": 100, "y": 165, "width": 75, "height": 18 },
       "format": { "fontFamily": "Helvetica", "fontSize": 9, "alignment": "left" }
     },
     {
@@ -53,26 +53,18 @@
     },
     {
       "id": "gross-salary",
-      "page": 2,
+      "page": 1,
       "type": "currency",
       "data": { "path": "india.salary.grossSalary" },
-      "position": { "x": 420, "y": 220, "width": 115, "height": 18 },
+      "position": { "x": 470, "y": 665, "width": 115, "height": 18 },
       "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
     },
     {
       "id": "standard-deduction",
-      "page": 2,
+      "page": 1,
       "type": "currency",
       "data": { "path": "india.salary.standardDeduction" },
-      "position": { "x": 420, "y": 310, "width": 115, "height": 18 },
-      "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
-    },
-    {
-      "id": "taxable-salary",
-      "page": 2,
-      "type": "currency",
-      "data": { "path": "india.salary.taxableSalary" },
-      "position": { "x": 420, "y": 390, "width": 115, "height": 18 },
+      "position": { "x": 470, "y": 745, "width": 115, "height": 18 },
       "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
     },
     {
@@ -80,7 +72,15 @@
       "page": 2,
       "type": "currency",
       "data": { "path": "india.tds.totalDeducted" },
-      "position": { "x": 420, "y": 485, "width": 115, "height": 18 },
+      "position": { "x": 473, "y": 280, "width": 115, "height": 18 },
+      "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
+    },
+        {
+      "id": "taxable-salary",
+      "page": 2,
+      "type": "currency",
+      "data": { "path": "india.salary.taxableSalary" },
+      "position": { "x": 473, "y": 385, "width": 115, "height": 18 },
       "format": { "type": "currency", "decimalPlaces": 0, "thousandsSeparator": true, "currencySymbol": "INR " }
     }
   ]
