@@ -11,6 +11,10 @@ This project is a compact engineering assessment for a tax-form annotation syste
 - Demonstrate a working renderer in C#
 - Provide documentation and a walkthrough suitable for submission
 
+## Specification
+
+The project specification is documented in [docs/specification.md](docs/specification.md). It defines the annotation contract, supported field types, coordinate model, rendering behavior, and the explicit list of features that are implemented versus planned for future work.
+
 ## Folder structure
 
 - `schema/annotation-schema.json` — JSON schema for annotation documents

@@ -1,14 +1,81 @@
 # Tax Annotation Specification
 
-## Overview
+## 1. Purpose
 
-This specification defines a form-independent layer that maps tax return data into structured fields on a PDF form. The goal is to separate the annotation metadata from the taxpayer record so templates can be reused and updated without embedding tax data directly into the form definition.
+This project defines a form-independent annotation layer for tax forms. The purpose is to keep three concerns separate:
 
-## Coordinate system
+1. the taxpayer data itself,
+2. the layout definition for a specific PDF form, and
+3. the display formatting rules used when values are rendered.
 
-All coordinates are expressed in PDF points unless otherwise stated. The origin is the top-left corner of the page. The `x` and `y` values identify the bounding-box origin, while `width` and `height` define the rectangular area reserved for the rendered value. The renderer scales this declared coordinate space to the actual target PDF page dimensions.
+This separation allows one annotation definition to be reused across tax years, countries, and form versions without copying taxpayer values into the layout file.
 
-Example:
+## 2. Scope
+
+The current implementation supports overlaying resolved values onto a source PDF form using a JSON annotation model. The project is intentionally narrow in scope and is designed for tax-form printing and annotation, not for general-purpose UI rendering.
+
+The supported workflow is:
+
+- read taxpayer data from a JSON document,
+- look up the selected country and template,
+- load the annotation document for that form,
+- resolve each `data.path` against the taxpayer object,
+- apply the configured formatter,
+- draw the final value onto the page,
+- optionally output a debug version with red rectangles around each target box.
+
+## 3. Core data model
+
+Every annotation document has the following top-level shape:
+
+```json
+{
+  "form": {
+    "id": "us-1040",
+    "version": "2025",
+    "page": 1,
+    "coordinateSystem": "pdf-points",
+    "width": 612,
+    "height": 792
+  },
+  "annotations": [
+    {
+      "id": "wages",
+      "type": "currency",
+      "data": {
+        "path": "income.w2[0].wages"
+      },
+      "position": {
+        "x": 505,
+        "y": 452,
+        "width": 75,
+        "height": 16
+      },
+      "format": {
+        "type": "currency",
+        "decimalPlaces": 0,
+        "thousandsSeparator": true,
+        "currencySymbol": ""
+      }
+    }
+  ]
+}
+```
+
+### Required fields
+
+- `form.id`: form identifier
+- `form.version`: form version label
+- `form.page`: default page number for the annotation set
+- `form.coordinateSystem`: either `pdf-points` or `relative`
+- `form.width`: form coordinate width
+- `form.height`: form coordinate height
+- `annotations[]`: array of annotation definitions
+- each annotation requires `id`, `type`, `data`, and `position`
+
+## 4. Coordinate system
+
+Coordinates are defined in PDF points with the origin at the top-left of the page, unless `unit: "relative"` is specified. The position object is:
 
 ```json
 "position": {
@@ -19,96 +86,199 @@ Example:
 }
 ```
 
-This means a value is drawn within the rectangle beginning at $(450, 300)$ and extending to $(540, 318)$.
+This creates a target rectangle whose top-left corner is at $(x, y)$ and whose size is `width x height`.
 
-If the annotation document declares a `612 x 792` page and the loaded PDF page is `612 x 792`, the rectangle is used unchanged. If the loaded page is `595 x 842`, the renderer maps each coordinate by `actualPageWidth / 612` and `actualPageHeight / 792`. Relative coordinates continue to use normalized values from 0 to 1.
+Rules:
 
-### US Form 1040 calibration
+- `x`, `y`, `width`, and `height` are interpreted in the form coordinate space declared by `form.width` and `form.height`.
+- If the template PDF has different page dimensions, the coordinates are scaled to match the actual page size.
+- `coordinateSystem: "relative"` means values are normalized between 0 and 1.
+- `unit: "relative"` on a position overrides the form-level coordinate system for that annotation.
 
-The US sample uses the original IRS Form 1040 first-page geometry (`612 x 792` points). Its core anchors are calibrated to the original form, not to a generated mock layout:
+This is the core calibration mechanism used when aligning to the original IRS PDF and other form templates.
 
-- filing status: approximately `(98, 201)`
-- first name: approximately `(45, 84)`
-- last name: approximately `(240, 84)`
-- SSN: approximately `(470, 84)`
-- wages line 1a: approximately `(505, 450)`
+## 5. Data lookup and nested paths
 
-These rectangles are intentionally kept in the annotation document so layout changes remain separate from taxpayer data. Run the renderer with `--debug` to see each rectangle and its annotation ID over the source form before changing coordinates.
+Each annotation points to a value using a `data.path`. The resolver traverses the taxpayer JSON object and supports:
 
-## Data lookup
+- property access: `taxpayer.name.first`
+- array index access: `income.w2[0].wages`
+- nested object chains: `return.adjustedGrossIncome`
 
-Each annotation includes a `data.path` string. This path is resolved against the runtime tax object. The path supports:
+If a lookup fails, the resolver returns `data.fallback` when present. Otherwise it renders blank.
 
-- object properties: `taxpayer.name.first`
-- array indexes: `income.w2[0].wages`
-- nested structures: `deductions.standardDeduction`
-
-A compliant resolver must traverse the object graph and return either the resolved value or a fallback value if the path is missing.
-
-## Supported field types
-
-- `text` — plain string values
-- `number` — numeric values with optional formatting
-- `currency` — money with separators and decimal control
-- `date` — date conversion from ISO inputs
-- `checkbox` — toggled based on equality against a configured value
-- `radio` — grouping and selection logic
-- `multiline` — text wrapping inside a field box
-- `percent` — percentage formatting
-
-## Formatting rules
-
-Formatting is intentionally separated from the source data so the same value can be rendered differently in different use cases. Supported options include:
-
-- decimal places
-- thousands separators
-- currency symbols
-- alignment
-- font family and font size
-- output date pattern
-- zero value placeholders
-- negative value formatting
-
-## Validation rules
-
-Annotations may optionally declare validation requirements. Examples:
+Example:
 
 ```json
-"validation": {
-  "pattern": "^\\d{3}-\\d{2}-\\d{4}$",
-  "required": true
+"data": {
+  "path": "income.w2[0].wages",
+  "fallback": 0
 }
 ```
 
-This supports structured validation before a form is submitted or printed.
+## 6. Supported field types
 
-## Rendering behavior
+The renderer currently supports the following annotation types:
 
-At render time, the engine should:
+- `text` — plain string output
+- `number` — numeric formatting
+- `currency` — thousands-separator and currency-string formatting
+- `date` — ISO date parsing with a configured output pattern
+- `percent` — numeric value with `%` suffix
+- `checkbox` — rendered when a value matches the configured equality condition
+- `radio` — same matching logic as checkbox, intended for choice-style fields
 
-1. Read the annotation definition
-2. Resolve the `data.path` against the taxpayer object
-3. Apply the configured formatter
-4. Determine whether the field is visible or checked
-5. Draw the value into the bounding box
-6. Handle overflow, nulls, and missing values gracefully
+The following are documented as planned future work and are not treated as implemented behavior today:
 
-## Errors and missing values
+- `multiline` text wrapping in a bounded box
+- advanced validation-driven rendering behavior
+- complex conditional visibility logic
+- repeating sections and dynamic form regions
 
-The renderer should not crash if a field is empty or the path is absent. Recommended behavior:
+## 7. Formatting rules
 
-- missing value + no fallback: render blank
-- missing value + fallback: render fallback value
-- invalid number: render blank or validation warning
-- checkbox with missing value: leave unchecked
+Formatting remains separate from taxpayer data so a single value can be rendered differently by form context.
 
-## Extension points
+Supported formatting members include:
 
-The annotation model is intentionally extensible. Future versions can add:
+- `type`
+- `decimalPlaces`
+- `thousandsSeparator`
+- `currencySymbol`
+- `alignment` (`left`, `center`, `right`)
+- `verticalAlignment` (`top`, `center`, `bottom`)
+- `verticalOffset` (PDF points)
+- `fontFamily`
+- `fontSize`
+- `output` (for date formatting)
+- `zeroFormat`
+- `negativeFormat`
 
-- repeating sections
-- conditional visibility expressions
-- per-field dependencies
-- schema versioning
-- accessibility metadata
-- OCR calibration anchors
+Example:
+
+```json
+"format": {
+  "type": "currency",
+  "decimalPlaces": 0,
+  "thousandsSeparator": true,
+  "currencySymbol": "",
+  "alignment": "right",
+  "verticalAlignment": "center",
+  "verticalOffset": 3
+}
+```
+
+## 8. Checkbox and value matching
+
+Checkbox and radio annotations use their `value.equals` rule to decide whether to render the configured mark.
+
+Example:
+
+```json
+{
+  "id": "filing-status-single",
+  "type": "checkbox",
+  "data": {
+    "path": "taxpayer.filingStatus"
+  },
+  "value": {
+    "equals": "single"
+  },
+  "appearance": {
+    "mark": "X"
+  }
+}
+```
+
+If the resolved value equals the configured value, the renderer draws the mark. Otherwise it leaves the field blank.
+
+## 9. Debug overlay behavior
+
+The debug mode is a required calibration tool for this project. When running with `--debug`, the renderer:
+
+- draws the annotation rectangle in red,
+- draws the annotation `id` near the box,
+- renders the final PDF while preserving the underlying form underneath.
+
+This allows the annotation author to verify exact field placement on the original PDF without changing taxpayer data.
+
+## 10. Rendering flow
+
+The renderer executes this path:
+
+1. Load the source PDF template.
+2. Read the annotation document.
+3. Resolve each annotation path against the taxpayer object.
+4. Determine the annotation type and apply the format rules.
+5. Draw the value into the bounding rectangle.
+6. Save the modified PDF.
+7. If debug mode is enabled, draw red calibration rectangles.
+
+## 11. Error handling and missing values
+
+The current renderer is designed to fail gracefully rather than crash on incomplete data.
+
+Behavior:
+
+- missing value with no fallback: render blank
+- missing value with fallback: render fallback value
+- invalid number: render blank
+- invalid date: render blank
+- checkbox with no match: leave unchecked
+- invalid annotation page number: throw an error because the page is outside the document range
+
+## 12. Country routing and templates
+
+The project routes country selections through `examples/form-manifest.json`.
+
+Example:
+
+```json
+{
+  "countries": {
+    "US": {
+      "template": "templates/us-tax-form.pdf",
+      "annotations": "examples/form-1040.json",
+      "output": "output/filled-form-1040.pdf"
+    },
+    "IN": {
+      "template": "templates/india-tax-form-blank.pdf",
+      "annotations": "examples/form-16.json",
+      "output": "output/filled-form-16.pdf"
+    }
+  }
+}
+```
+
+The runtime country key is read from `examples/taxpayer-data.json` and matched against the manifest.
+
+## 13. Run instructions
+
+From the project root:
+
+```powershell
+cd "c:\Users\SujayKummari\Desktop\Java\instead-tax-annotation\instead-tax-annotation"
+dotnet test tests
+dotnet run --project renderer
+dotnet run --project renderer -- --debug
+```
+
+The output PDF is written under `output/`, and the debug run creates a debug copy with the label overlays.
+
+## 14. Non-goals and future extension
+
+This project does not currently aim to provide full tax filing logic, OCR, or general-purpose form authoring. It is a focused prototype for annotation-driven PDF overlay generation.
+
+Future improvements may include:
+
+- richer validation rules,
+- multiline field rendering,
+- conditional visibility,
+- dynamic repeating sections,
+- improved calibration tooling,
+- schema versioning and compatibility checks,
+- broader country and form coverage.
+
+## 15. Summary
+
+This specification defines the current contract of the project: a JSON annotation system that resolves nested taxpayer data, applies formatting, and overlays values onto official-style tax PDFs with controlled debug calibration. The implementation is intentionally compact but stable, and the documented future-work list makes the project boundaries explicit.
